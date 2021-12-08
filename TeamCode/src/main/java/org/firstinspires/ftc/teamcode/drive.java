@@ -57,12 +57,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-
-import android.text.method.Touch;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -94,6 +91,8 @@ public class drive extends LinearOpMode {
     private DcMotor spinnerIntake = null;
     TouchSensor touch;
     Servo servo;
+    Servo servoFlip;
+    CRServo contServo;
 
     //right trigger move one motor more depending on 1 or -1 values (Range.clip())
     @Override
@@ -110,6 +109,8 @@ public class drive extends LinearOpMode {
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
         spinnerIntake = hardwareMap.get(DcMotor.class, "spinner_intake");
         servo = hardwareMap.get(Servo.class, "servoTest");
+        contServo =  hardwareMap.crservo.get("contServo");
+        servoFlip = hardwareMap.get(Servo.class, "flipIntake");
 
 
         // Most robots need the motor on one side to be reversed to drive forward
@@ -157,127 +158,20 @@ public class drive extends LinearOpMode {
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
 
-            // When buttons are pressed
-            if (gamepad1.b) {
-                servo.setPosition(40);
+            // Set variable to the game pad value
+            double intakePower = gamepad2.left_stick_y;
+
+            // Set hex motor to game pad speed
+            spinnerIntake.setPower(intakePower);
+
+            // Set servo power to highest
+            if (gamepad1.right_bumper) {
+                contServo.setPower(1.0);
+            } else {
+                contServo.setPower(0);
+
+
             }
-            // If touch sensor hits the ground, set servo power to 0
-            //if (touch.isPressed()) {
-            //null;
-            //}
         }
     }
-
 }
-/**
-package org.firstinspires.ftc.teamcode;
-
-
-import android.text.method.Touch;
-
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
-**/
-/**
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-/**
-@TeleOp(name="Basic: First Program", group="Knightrix")
-public class drive extends LinearOpMode {
-
-    // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
-    TouchSensor touch;
-    Servo servo;
-
-    @Override
-    public void runOpMode() {
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone)
-        // Adding touch sensor as hardware program.
-        touch = hardwareMap.get(TouchSensor.class, "Touch");
-        leftDrive = hardwareMap.get(DcMotor.class, "motorTest");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        servo = hardwareMap.get(Servo.class, "servoTest");
-
-
-        // Most robots need the motor on one side to be reversed to drive forward
-        // Reverse the motor that runs backwards when connected directly to the battery
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
-
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-        runtime.reset();
-
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-
-            // Setup a variable for each drive wheel to save power level for telemetry
-            double leftPower;
-            double rightPower;
-            double servoposition;
-
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
-
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
-            double drive = -gamepad1.left_stick_y;
-            double turn = gamepad1.left_stick_x;
-            leftPower = Range.clip(drive + turn, -1.0, 1.0);
-            //rightPower = Range.clip(drive - turn, -1.0, 1.0);
-
-            // Tank Mode uses one stick to control each wheel.
-            // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            leftPower = -gamepad1.left_stick_y;
-            //rightPower = -gamepad1.right_stick_y;
-            //servoposition = Range.clip(gamepad1.left_trigger, 0, 1);
-
-            // Send calculated power to wheels
-            leftDrive.setPower(leftPower);
-            rightDrive.setPower(leftPower);
-            //servo.setPosition(servoposition);
-
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-            telemetry.update();
-
-            // When buttons are pressed
-            if (gamepad1.b) {
-                servo.setPosition(40);
-            }
-            // If touch sensor hits the ground, set servo power to 0
-            //if (touch.isPressed()) {
-            //null;
-            //}
-        }
-    }
-
-}
- **/
