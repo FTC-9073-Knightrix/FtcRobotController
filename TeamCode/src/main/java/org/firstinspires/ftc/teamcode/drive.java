@@ -76,10 +76,11 @@ public class drive extends LinearOpMode {
 
         // Set Motor variables
         // Motors using encoders:
-        // spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+         spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //spinnerArm.setTargetPosition(200);
         // set motors to run to target encoder position and stop with brakes on.
         //spinnerArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        spinnerArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         // spinnerArm.setPower(1);
@@ -180,8 +181,9 @@ public class drive extends LinearOpMode {
 
 
             // Telemetry
-            telemetry.addData("Move to:", armTargetPos+Right_TrigPosition);
-            telemetry.addData("Curr Pos:",spinnerArm.getCurrentPosition());
+            telemetry.addData("Move to:", Right_TrigPosition);
+            telemetry.addData("Curr Pos:",armPos);
+            telemetry.addData("Power:",spinPower);
             telemetry.addData("is at target", !spinnerArm.isBusy());
 
             telemetry.addData("Dropping?:", dropping);
@@ -235,8 +237,8 @@ public class drive extends LinearOpMode {
         // Drop is 160
         //
         // Variables
-        double OvershootPower = .3;
-        double FullPower = 1;
+        double OvershootPower = .2;
+        double FullPower = .4; //change to 1 for robot
         int MoveThreshold = 5;
         // 1. Get current position
         armPos = spinnerArm.getCurrentPosition();
