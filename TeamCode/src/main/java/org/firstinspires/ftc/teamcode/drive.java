@@ -89,6 +89,7 @@ public class drive extends LinearOpMode {
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
         spinnerArm.setDirection(DcMotor.Direction.REVERSE);
+        spinnerIntake.setDirection(DcMotor.Direction.REVERSE);
 
 
         telemetry.addData("Mode", "waiting");
@@ -118,12 +119,24 @@ public class drive extends LinearOpMode {
             } else if (gamepad2.b) {
                 dropping = false;
                 armTargetPos = Pickup_Hover;
+                if (!BoxTouch.isPressed()){
+                    spinnerArm.setPower(-0.5);
+                } else {
+                    spinnerArm.setPower(0);
+                }
+
             }
 
             if (dropping) {
                 Right_TrigPosition = armTargetPos + (int)(Drop_Range * gamepad2.left_trigger);
             } else {
                 Right_TrigPosition = armTargetPos + 0;
+            }
+
+            if (gamepad2.right_bumper) {
+                spinnerIntake.setPower(0.5);
+            } else if (gamepad2.left_bumper) {
+                spinnerIntake.setPower(-0.5);
             }
 
             /*  //Keep going down until touch sensor is triggered
@@ -161,7 +174,7 @@ public class drive extends LinearOpMode {
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
             double drive = -gamepad1.left_stick_y;
-            double turn = gamepad1.right_stick_x;
+            double turn = -gamepad1.right_stick_x;
 
             // Combine drive and turn for blended motion.
             LeftPower  = drive + turn;
