@@ -139,8 +139,13 @@ public class drive extends LinearOpMode {
 
             CalcArmPower((int)Right_TrigPosition);
 
-            spinnerArm.setPower(spinPower);
+            // Calculate Box Ratio
+            double BoxHigh = .8;
+            double BoxLow = .2;
+            double BoxPos = (((BoxHigh - BoxLow) / (Drop_Rotation - Pickup_Hover)) * armPos ) + BoxLow;
 
+            spinnerArm.setPower(spinPower);
+            servoFlip.setPosition(BoxPos);
 
              // Move the Arm
             //spinnerArm.setTargetPosition((int) (armTargetPos+Right_TrigPosition));
