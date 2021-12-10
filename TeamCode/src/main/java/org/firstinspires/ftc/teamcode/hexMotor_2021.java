@@ -28,7 +28,7 @@ public class hexMotor_2021 extends LinearOpMode {
 
         // Reset the encoder during initialization
         motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor.setDirection(DcMotor.Direction.FORWARD);
+        motor.setDirection(DcMotor.Direction.REVERSE);
 
         waitForStart();
 

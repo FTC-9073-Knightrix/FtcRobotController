@@ -45,14 +45,15 @@ public class drive extends LinearOpMode {
     CRServo contServo;
 
     // Variables
-    int Drop_Rotation = 160;
-    int Drop_Range = 30;
-    int Pickup_Hover = 10;
+    int Drop_Rotation = 1200;
+    int Drop_Range = 300;
+    int Pickup_Hover = 20;
     boolean dropping = false;
     double armTargetPos = 0;
     double armPos = 0;
     static double Right_TrigPosition;
     static double spinPower = 0;
+    static double BoxPos = 0;
 
     //right trigger move one motor more depending on 1 or -1 values (Range.clip())
     //encoder used to move intake
@@ -88,7 +89,7 @@ public class drive extends LinearOpMode {
         // Motors without encoders
         leftDrive.setDirection(DcMotor.Direction.FORWARD);
         rightDrive.setDirection(DcMotor.Direction.REVERSE);
-        spinnerArm.setDirection(DcMotor.Direction.REVERSE);
+        spinnerArm.setDirection(DcMotor.Direction.FORWARD);
 
 
         telemetry.addData("Mode", "waiting");
@@ -111,7 +112,10 @@ public class drive extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // **** MOVE THE ARM ****
+            // ***********************
+            // **** MOVE THE ARM *****
+            // ***********************
+            // Select PICKUP or DROP POSITION for the Arm
             if (gamepad2.a) {
                 dropping = true;
                 armTargetPos = Drop_Rotation;
@@ -119,13 +123,15 @@ public class drive extends LinearOpMode {
                 dropping = false;
                 armTargetPos = Pickup_Hover;
             }
-
+            // Adjust Drop Position with Gamepad for 1, 2 & 3 levels
             if (dropping) {
                 Right_TrigPosition = armTargetPos + (int)(Drop_Range * gamepad2.left_trigger);
             } else {
                 Right_TrigPosition = armTargetPos + 0;
             }
-
+            // Calculate the power for the Arm and Move
+            CalcArmPower((int)Right_TrigPosition);
+            spinnerArm.setPower(-spinPower);
             /*  //Keep going down until touch sensor is triggered
             if (BoxTouch.isPressed()) {
                 armPos = 0;
@@ -137,40 +143,27 @@ public class drive extends LinearOpMode {
             }
             */
 
-            CalcArmPower((int)Right_TrigPosition);
 
-            // Calculate Box Ratio
-            double BoxHigh = .8;
-            double BoxLow = .2;
-            double BoxPos = (((BoxHigh - BoxLow) / (Drop_Rotation - Pickup_Hover)) * armPos ) + BoxLow;
 
-            spinnerArm.setPower(spinPower);
+            // *******************
+            // ** MOVE THE BOX ***
+            // *******************
+            // if pickup => safe postion + Joystick to go down
+            CalcBoxPosition((double)armPos);
             servoFlip.setPosition(BoxPos);
 
-             // Move the Arm
-            //spinnerArm.setTargetPosition((int) (armTargetPos+Right_TrigPosition));
-            //spinnerArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // Missing code for Box Leveling servo
 
 
 
-
-
-
-
+            // *************************
             // **** DRIVE THE ROBOT ****
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
-
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
+            // *************************
             double drive = -gamepad1.left_stick_y;
             double turn = gamepad1.right_stick_x;
 
             // Combine drive and turn for blended motion.
-            LeftPower  = drive + turn;
-            RightPower = drive - turn;
+            LeftPower  = drive - turn;
+            RightPower = drive + turn;
 
             // Normalize the values so neither exceed +/- 1.0
             max = Math.max(Math.abs(LeftPower), Math.abs(RightPower));
@@ -185,37 +178,47 @@ public class drive extends LinearOpMode {
             rightDrive.setPower(RightPower);
 
 
-            // Telemetry
-            telemetry.addData("Move to:", Right_TrigPosition);
-            telemetry.addData("Curr Pos:",armPos);
-            telemetry.addData("Power:",spinPower);
-            telemetry.addData("is at target", !spinnerArm.isBusy());
-
-            telemetry.addData("Dropping?:", dropping);
-            telemetry.update();
 
 
-
-            // TO REVIEW
-
-            servoposition = Range.clip(gamepad1.left_trigger, 0, 1);
-
-
+            // ************************
+            // *** MOVE THE INTAKE ****
+            // ************************
             double intakePower = gamepad2.left_stick_y;
-
             // Set hex motor to game pad speed
             spinnerIntake.setPower(intakePower);
 
+
+
+
+            // ****************************
+            // *** MOVE THE DUCK SERVO ****
+            // ****************************
             // Set servo power to highest
             if (gamepad1.right_bumper) {
                 contServo.setPower(1.0);
-                } else {
+            } else {
                 contServo.setPower(0);
             }
 
 
-        }
 
+            // TO REVIEW
+            servoposition = Range.clip(gamepad1.left_trigger, 0, 1);
+
+
+
+            // *****************
+            // *** TELEMETRY ***
+            // *****************
+            telemetry.addData("Move to:", Right_TrigPosition);
+            telemetry.addData("Curr Pos:",armPos);
+            telemetry.addData("Power:",-spinPower);
+            telemetry.addData("Box:",BoxPos);
+            telemetry.addData("Box:",servoFlip.getPosition());
+            telemetry.addData("is at target", !spinnerArm.isBusy());
+
+            telemetry.addData("Dropping?:", dropping);
+            telemetry.update();
 
             // Show the elapsed game time and wheel power.
             //telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -226,7 +229,30 @@ public class drive extends LinearOpMode {
             //if (touch.isPressed()) {
             //null;
             //}
+
         }
+    }
+
+
+    private void CalcBoxPosition(double armPos) {
+        // Define position variables
+        double PickUpStart = 0;
+        double PickUpPos = 0.3;
+        double DropPos= .75;
+        double Trigger_Adjust = gamepad2.right_trigger; // Values 0 to 1
+
+        if (!dropping) { //If we are picking up blocks
+            BoxPos = PickUpStart + Trigger_Adjust * 0.3;
+        } else {         // Dropping blocks;
+            // Once reached Delivery, Use joystick
+            if ((int)Math.abs(armPos-Drop_Rotation)<200) { // We are close to drop zone
+            BoxPos = DropPos + Trigger_Adjust * (1-DropPos); // To ensure value is not bigger than 1
+            } else {                                       // We are travelling
+                // Between PickUp and Delivery, calculate balance
+                BoxPos = (armPos / Drop_Rotation * (DropPos-PickUpPos) ) + PickUpPos;
+            }
+        }
+    }
 
     private void CalcArmPower(int right_trigPosition) {
         // 1.Get current position
@@ -237,10 +263,6 @@ public class drive extends LinearOpMode {
         // 6.Low Power => Power 30%
         // 7. Mid Power => Power 50%
 
-        // Asumptions
-        // Pickup is 0
-        // Drop is 160
-        //
         // Variables
         double OvershootPower = .2;
         double FullPower = .4; //change to 1 for robot
@@ -248,30 +270,43 @@ public class drive extends LinearOpMode {
         // 1. Get current position
         armPos = spinnerArm.getCurrentPosition();
 
-        if (Math.abs(Right_TrigPosition - armPos) < MoveThreshold) { //Inside Threshold don't move
-            spinPower = 0;
-        } else {  // Need to move the arm
-            if (armPos <= (Drop_Rotation/6*3)) {        //I'm in PickUp Zone
-                if(armPos < Right_TrigPosition) { //I'm lower than target
+        if (armPos < 600) { // Pickup Zone
+            if(armPos > Right_TrigPosition) {   // Above Target
+                spinPower = -OvershootPower;
+            } else {
+                // Add continuous down when close to Pickup_Hover position
+                // until the Touch is triggered
+                if (dropping) {
+                    spinPower = -0.1;
+                } else {
                     spinPower = FullPower;
-                } else {  // I'm higher than target
-                    spinPower = -OvershootPower;
                 }
-            } else if (armPos >= (Drop_Rotation*5/6)) { //I'm in the Drop Zone
-                if(armPos < Right_TrigPosition) { //I'm higher than target
-                    spinPower = OvershootPower;
-                } else {  // I'm higher than target
-                    spinPower = -FullPower;
-                }
-            } else {                                    // I'm in the middle Zone
-                if(armPos < Right_TrigPosition) { //I'm higher than target
-                    spinPower = 0.5;
-                } else {  // I'm higher than target
-                    spinPower = -0.5;
-                }
-
+            }
+        } else if (armPos > 1000) { // Drop Zone
+            if(armPos < Right_TrigPosition) {   // Above Target
+                spinPower = OvershootPower;
+            } else {
+                spinPower = -FullPower;
+            }
+        } else { // Middlezone
+            if(armPos > Right_TrigPosition) {
+                spinPower = -.3;
+            } else {
+                spinPower = .3;
             }
         }
 
+        // if within threshold, no more power
+        if (Math.abs(Right_TrigPosition - armPos) < MoveThreshold) { //Inside Threshold don't move
+            spinPower = 0;
+        }
+
+        // going Picking up AND trigger then
+        // stop motors
+        // set encoder to zero
+        if ((dropping) && BoxTouch.isPressed()) {
+            spinPower = 0; //Turn OFF Motor
+            spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //This will also reset armPos
+        }
     }
 }
