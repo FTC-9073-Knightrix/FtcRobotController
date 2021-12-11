@@ -176,9 +176,12 @@ public class drive extends LinearOpMode {
             // ************************
             // *** MOVE THE INTAKE ****
             // ************************
-            double intakePower = gamepad2.left_stick_y;
+            int intakePower = 0;
+            if (gamepad2.dpad_up || gamepad1.dpad_up) { intakePower = 1;};
+            if (gamepad2.dpad_down || gamepad1.dpad_down) { intakePower = -1;};
             // Set hex motor to game pad speed
-            spinnerIntake.setPower(intakePower);
+            // Set hex motor to game pad speed
+            spinnerIntake.setPower((double) intakePower);
 
 
 
