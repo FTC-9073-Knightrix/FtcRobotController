@@ -14,23 +14,10 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.sun.source.tree.WhileLoopTree;
 
 
-
-/**
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-
-@TeleOp(name="Basic: First Program", group="Knightrix")
+@TeleOp(name="Drive", group="Knightrix")
 public class drive extends LinearOpMode {
 
     // Declare OpMode members.
@@ -46,14 +33,15 @@ public class drive extends LinearOpMode {
 
     // Variables
     int Drop_Rotation = 1200;
-    int Drop_Range = 300;
+    int Drop_Range = 400;   //increase drop range
     int Pickup_Hover = 20;
     boolean dropping = false;
     double armTargetPos = 0;
     double armPos = 0;
     static double Right_TrigPosition;
     static double spinPower = 0;
-    static double BoxPos = 0;
+    static double BoxPos = 1;
+    boolean BoxInitialized = false;
 
     //right trigger move one motor more depending on 1 or -1 values (Range.clip())
     //encoder used to move intake
@@ -62,9 +50,7 @@ public class drive extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone)
+        // Initialize the hardware variables.
         // Adding touch sensor as hardware program.
         BoxTouch = hardwareMap.get(TouchSensor.class, "Box_Touch");
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
@@ -74,6 +60,7 @@ public class drive extends LinearOpMode {
 //        servo = hardwareMap.get(Servo.class, "servoTest");
         contServo =  hardwareMap.crservo.get("cont_Servo");
         servoFlip = hardwareMap.get(Servo.class, "flip_Intake");
+        spinnerArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Set Motor variables
         // Motors using encoders:
@@ -131,7 +118,7 @@ public class drive extends LinearOpMode {
             }
             // Calculate the power for the Arm and Move
             CalcArmPower((int)Right_TrigPosition);
-            spinnerArm.setPower(-spinPower);
+            spinnerArm.setPower(spinPower);
             /*  //Keep going down until touch sensor is triggered
             if (BoxTouch.isPressed()) {
                 armPos = 0;
@@ -150,7 +137,13 @@ public class drive extends LinearOpMode {
             // *******************
             // if pickup => safe postion + Joystick to go down
             CalcBoxPosition((double)armPos);
-            servoFlip.setPosition(BoxPos);
+
+            if (!BoxInitialized) {
+                InitBox();
+            } else {
+                servoFlip.setPosition(BoxPos);
+            }
+
 
 
 
@@ -196,6 +189,8 @@ public class drive extends LinearOpMode {
             // Set servo power to highest
             if (gamepad1.right_bumper) {
                 contServo.setPower(1.0);
+            } else if (gamepad1.left_bumper){
+                contServo.setPower(-1.0);
             } else {
                 contServo.setPower(0);
             }
@@ -203,7 +198,7 @@ public class drive extends LinearOpMode {
 
 
             // TO REVIEW
-            servoposition = Range.clip(gamepad1.left_trigger, 0, 1);
+            //servoposition = Range.clip(gamepad1.left_trigger, 0, 1);
 
 
 
@@ -211,9 +206,10 @@ public class drive extends LinearOpMode {
             // *** TELEMETRY ***
             // *****************
             telemetry.addData("Move to:", Right_TrigPosition);
+            telemetry.addData("Initial: ", BoxInitialized);
             telemetry.addData("Curr Pos:",armPos);
-            telemetry.addData("Power:",-spinPower);
-            telemetry.addData("Box:",BoxPos);
+            telemetry.addData("Power:",spinPower);
+            telemetry.addData("Box Target:",BoxPos);
             telemetry.addData("Box:",servoFlip.getPosition());
             telemetry.addData("is at target", !spinnerArm.isBusy());
 
@@ -233,25 +229,50 @@ public class drive extends LinearOpMode {
         }
     }
 
+    private void InitBox(){
+        spinnerArm.setPower(-0.6);              // Moves Arm UP
+        armPos = spinnerArm.getCurrentPosition();
+
+        while (armPos < 300){
+            armPos = spinnerArm.getCurrentPosition();
+            telemetry.addData("ArmPos: ", armPos);
+            telemetry.update();
+        }
+
+        servoFlip.setPosition(0);              // Moves Servo to safe position
+        spinnerArm.setPower(-0.2);              // To hold Arm in place
+        sleep(2000);                 // Wait for BOx to go to safe position
+
+        while (!BoxTouch.isPressed()){
+            spinnerArm.setPower(0);              // Moves Arm DOWN
+
+        }
+
+        spinnerArm.setPower(0);              //Turn OFF Motor
+        spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //This will also reset armPos
+        BoxInitialized = true;
+
+    }
 
     private void CalcBoxPosition(double armPos) {
         // Define position variables
         double PickUpStart = 0;
-        double PickUpPos = 0.3;
-        double DropPos= .75;
-        double Trigger_Adjust = gamepad2.right_trigger; // Values 0 to 1
+        double PickUpPos = 0.17;
+        double DropPos= .65;
+        double Trigger_Adjust = gamepad2.right_trigger + gamepad1.right_trigger; // Values 0 to 1
 
         if (!dropping) { //If we are picking up blocks
-            BoxPos = PickUpStart + Trigger_Adjust * 0.3;
+            BoxPos = PickUpStart + (Trigger_Adjust * (PickUpPos-PickUpStart));   //safe position + Driver Adjustment
         } else {         // Dropping blocks;
             // Once reached Delivery, Use joystick
             if ((int)Math.abs(armPos-Drop_Rotation)<200) { // We are close to drop zone
-            BoxPos = DropPos + Trigger_Adjust * (1-DropPos); // To ensure value is not bigger than 1
+                BoxPos = DropPos - Trigger_Adjust * (1-DropPos); // To ensure value is not bigger than 1
             } else {                                       // We are travelling
                 // Between PickUp and Delivery, calculate balance
-                BoxPos = (armPos / Drop_Rotation * (DropPos-PickUpPos) ) + PickUpPos;
+                BoxPos = (armPos / Drop_Rotation * (DropPos-PickUpStart) ) + PickUpStart;
             }
         }
+        BoxPos = Range.clip(BoxPos, 0, 1);
     }
 
     private void CalcArmPower(int right_trigPosition) {
@@ -264,49 +285,53 @@ public class drive extends LinearOpMode {
         // 7. Mid Power => Power 50%
 
         // Variables
-        double OvershootPower = .2;
-        double FullPower = .4; //change to 1 for robot
+        double OvershootPower = 0;
+        double FullPower = .6; //change to 1 for robot
         int MoveThreshold = 5;
         // 1. Get current position
         armPos = spinnerArm.getCurrentPosition();
 
         if (armPos < 600) { // Pickup Zone
             if(armPos > Right_TrigPosition) {   // Above Target
-                spinPower = -OvershootPower;
+                spinPower = OvershootPower;    //was a negative
             } else {
                 // Add continuous down when close to Pickup_Hover position
                 // until the Touch is triggered
                 if (dropping) {
-                    spinPower = -0.1;
+                    spinPower = -FullPower;  // Go UP
                 } else {
-                    spinPower = FullPower;
+                    spinPower = OvershootPower; // Go Down
                 }
             }
         } else if (armPos > 1000) { // Drop Zone
             if(armPos < Right_TrigPosition) {   // Above Target
-                spinPower = OvershootPower;
+                spinPower = -OvershootPower;
             } else {
-                spinPower = -FullPower;
+                spinPower = FullPower;
             }
         } else { // Middlezone
             if(armPos > Right_TrigPosition) {
-                spinPower = -.3;
+                spinPower = .4;
             } else {
-                spinPower = .3;
+                spinPower = -.4;
             }
         }
 
         // if within threshold, no more power
         if (Math.abs(Right_TrigPosition - armPos) < MoveThreshold) { //Inside Threshold don't move
-            spinPower = 0;
+            if(dropping) {
+                spinPower = .1;
+            }
         }
 
         // going Picking up AND trigger then
         // stop motors
         // set encoder to zero
-        if ((dropping) && BoxTouch.isPressed()) {
+        if ((! dropping) && BoxTouch.isPressed()) {
             spinPower = 0; //Turn OFF Motor
             spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //This will also reset armPos
+            spinnerArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         }
     }
 }

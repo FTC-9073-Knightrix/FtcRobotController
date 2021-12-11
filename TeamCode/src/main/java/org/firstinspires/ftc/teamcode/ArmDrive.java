@@ -39,7 +39,6 @@ public class ArmDrive extends LinearOpMode {
         spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         spinnerArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         spinnerArm.setDirection(DcMotor.Direction.FORWARD);
-        spinnerArm.setPower(1);
 
 
         telemetry.addData("Mode", "waiting");
@@ -128,4 +127,4 @@ public class ArmDrive extends LinearOpMode {
 
 
 
-}
+
