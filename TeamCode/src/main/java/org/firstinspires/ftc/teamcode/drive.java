@@ -109,6 +109,12 @@ public class drive extends LinearOpMode {
             } else if (gamepad2.b) {
                 dropping = false;
                 armTargetPos = Pickup_Hover;
+                if (!BoxTouch.isPressed()){
+                    spinnerArm.setPower(-0.5);
+                } else {
+                    spinnerArm.setPower(0);
+                }
+
             }
             // Adjust Drop Position with Gamepad for 1, 2 & 3 levels
             if (dropping) {
@@ -116,9 +122,11 @@ public class drive extends LinearOpMode {
             } else {
                 Right_TrigPosition = armTargetPos + 0;
             }
+
             // Calculate the power for the Arm and Move
             CalcArmPower((int)Right_TrigPosition);
             spinnerArm.setPower(spinPower);
+
             /*  //Keep going down until touch sensor is triggered
             if (BoxTouch.isPressed()) {
                 armPos = 0;
@@ -152,7 +160,7 @@ public class drive extends LinearOpMode {
             // **** DRIVE THE ROBOT ****
             // *************************
             double drive = -gamepad1.left_stick_y;
-            double turn = gamepad1.right_stick_x;
+            double turn = -gamepad1.right_stick_x;
 
             // Combine drive and turn for blended motion.
             LeftPower  = drive - turn;
