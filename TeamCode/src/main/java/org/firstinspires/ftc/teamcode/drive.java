@@ -254,7 +254,7 @@ public class drive extends LinearOpMode {
         spinnerArm.setPower(-0.2);              // To hold Arm in place
         sleep(2000);                 // Wait for BOx to go to safe position
 
-        while (!BoxTouch.isPressed()){
+        while (!BoxTouch.isPressed() ){  //add an or statement for #seconds passed
             spinnerArm.setPower(0);              // Moves Arm DOWN
 
         }
