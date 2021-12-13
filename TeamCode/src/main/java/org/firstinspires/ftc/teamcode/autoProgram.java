@@ -50,7 +50,7 @@ public class autoProgram extends LinearOpMode {
         moveForward(1000);
         turnLeft(1000);
         moveForward(1000);
-
+        wait(100);
 
 
         }
