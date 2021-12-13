@@ -16,8 +16,8 @@ import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 // import lines were omitted. OnBotJava will add them automatically.
 
-@TeleOp(name="Spinner_Arm_Encoder", group="Pushbot")
-public class hexMotor_2021 extends LinearOpMode {
+@TeleOp(name="Arm_with_Encoder", group="Testing")
+public class ArmEncoders extends LinearOpMode {
     DcMotor motor;
 
     @Override
@@ -214,4 +214,5 @@ public class hexMotor_2021 extends LinearOpMode {
             //  sleep(250);   // optional pause after each move
         }
     }**/
+
 //}
