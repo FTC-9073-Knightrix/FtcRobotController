@@ -8,7 +8,11 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous(name = "testAuto", group = "Knightrix")
 public class autoProgram extends LinearOpMode {
+    @Override
+    public void runOpMode() throws InterruptedException {
 
+    }
+    /*
     DcMotor leftDrive;
     DcMotor rightDrive;
     public void moveForward(double time) {
@@ -53,6 +57,6 @@ public class autoProgram extends LinearOpMode {
         wait(100);
 
 
-        }
+        }*/
     }
 
