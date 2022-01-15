@@ -159,8 +159,8 @@ public class drive extends LinearOpMode {
             // *************************
             // **** DRIVE THE ROBOT ****
             // *************************
-            double drive = -gamepad1.left_stick_y;
-            double turn = -gamepad1.right_stick_x;
+            double turn = gamepad1.left_stick_y;
+            double drive = gamepad1.right_stick_x;
 
             // Combine drive and turn for blended motion.
             LeftPower  = drive - turn;
