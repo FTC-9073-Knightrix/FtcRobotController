@@ -1,128 +1,132 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.EventLoop;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvInternalCamera;
-import org.openftc.easyopencv.OpenCvPipeline;
-
+import org.checkerframework.checker.units.qual.A;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @Autonomous(name = "autoBasicPath", group = "Knightrix")
-public class autoBasicPath{
-    public DcMotor LeftDrive = null;
-    /*
-    public DcMotor RightDrive = null;
-    public DcMotor LeftDrive = null ;
-    public DcMotor Arm;
-    public DcMotor spinnerArm;
+public class autoBasicPath extends LinearOpMode{
 
-    //Convert from the counts per revolution of the encoder to counts per inch
+    DcMotor leftDrive;
+    DcMotor rightDrive;
+    DistanceSensor distance;
+
+
     static final double HD_COUNTS_PER_REV = 28;
     static final double DRIVE_GEAR_REDUCTION = 20.15293;
     static final double WHEEL_CIRCUMFERENCE_MM = 90 * Math.PI;
     static final double DRIVE_COUNTS_PER_MM = (HD_COUNTS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_MM;
     static final double DRIVE_COUNTS_PER_IN = DRIVE_COUNTS_PER_MM * 25.4;
-
-    //Create elapsed time variable and an instance of elapsed time
+    double distance1;
     private ElapsedTime runtime = new ElapsedTime();
 
-    // Drive function with 3 parameters
+
+    @Override
+    public void runOpMode() throws InterruptedException{
+
+        leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
+        leftDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+        distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
+
+        //leftDrive.setPower(0.2);
+        //rightDrive.setPower(0.2);
+        distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
+        //motor = hardwareMap.get(DcMotor.class, "Motor");
+
+        // Loop while the Op Mode is running
+        waitForStart();
+// doesn't stop on turn
+        while (opModeIsActive()) {
+            double distance1 = distance.getDistance(DistanceUnit.CM);
+            boolean turn = false;
+            //Add data and format correctly
+            telemetry.addData("status", "running");
+            telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));
+            //Consistently update the data while the Op Mode is running
+            telemetry.update();
+            //moves until reached a certain distance
+            if (distance1 < 40) {
+                //run to position at the desiginated power
+                leftDrive.setPower(-0.3);
+                rightDrive.setPower(-0.3);
+                telemetry.addData("turning", "false");
+                telemetry.update();
+            } else {
+                ///                       set code for turning
+                //leftDrive.setPower(0);
+                //rightDrive.setPower(0);
+                leftDrive.setPower(0.5);
+                rightDrive.setPower(-0.5);
+                sleep(1000);
+                leftDrive.setPower(0);
+                rightDrive.setPower(0);
+                telemetry.addData("turning:", "true");
+                telemetry.update();
+
+            }
+            //spin(5000);
+        }
+    }
+
+
+
+    public void spin(long time){
+        while (opModeIsActive() && (getRuntime() < time)){
+            //leftDrive.setPower(0.2);
+            //rightDrive.setPower(0.2);
+
+            telemetry.addData("Status:", "Running");
+            //telemetry.addData("Power", DcMotor.getPower());
+            telemetry.addData("Status", "Run Time: " + getRuntime());
+            telemetry.addData("distance: ", "" + distance1);
+            telemetry.update();
+        }
+    }
+
     private void drive(double power, double leftInches, double rightInches) {
         int rightTarget;
         int leftTarget;
 
         if (opModeIsActive()) {
+            double distance1 = distance.getDistance(DistanceUnit.CM);
+            //Add data and format correctly
+            telemetry.addData("status", "running");
+            telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));
+            //Consistently update the data while the Op Mode is running
+            telemetry.update();
             // Create target positions
-            rightTarget = RightDrive.getCurrentPosition() + (int) (rightInches * DRIVE_COUNTS_PER_IN);
-            leftTarget = LeftDrive.getCurrentPosition() + (int) (leftInches * DRIVE_COUNTS_PER_IN);
+            rightTarget = rightDrive.getCurrentPosition() + (int) (rightInches * DRIVE_COUNTS_PER_IN);
+            leftTarget = leftDrive.getCurrentPosition() + (int) (leftInches * DRIVE_COUNTS_PER_IN);
 
             // set target position
-            LeftDrive.setTargetPosition(leftTarget);
-            RightDrive.setTargetPosition(rightTarget);
+            leftDrive.setTargetPosition(leftTarget);
+            rightDrive.setTargetPosition(rightTarget);
 
             //switch to run to position mode
-            LeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            RightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            //run to position at the desiginated power
-            LeftDrive.setPower(power);
-            RightDrive.setPower(power);
+
+
 
             // wait until both motors are no longer busy running to position
-            while (opModeIsActive() && (LeftDrive.isBusy() || RightDrive.isBusy())) {
+            while (opModeIsActive() && (leftDrive.isBusy() || rightDrive.isBusy())) {
             }
 
             // set motor power back to 0
-            LeftDrive.setPower(0);
-            RightDrive.setPower(0);
+            //leftDrive.setPower(0);
+            //rightDrive.setPower(0);
         }
     }
-
-
-    @Override
-    public void runOpMode() {
-
-        spinnerArm.setPower(-0.2);              // To hold Arm in place
-
-        RightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        LeftDrive = hardwareMap.get(DcMotor.class, "left_drive");
-        Arm = hardwareMap.get(DcMotor.class, "Arm");
-        spinnerArm = hardwareMap.get(DcMotor.class, "spinner_arm");
-
-
-        LeftDrive.setDirection(DcMotor.Direction.REVERSE);
-
-        waitForStart();
-        if (opModeIsActive()) {
-
-            //segment 1
-            drive(0.7, 30, 15);
-
-            runtime.reset(); // reset elapsed time timer
-
-            //segment 2 - lift arm, drive to shipping hub, outtake freight
-            while (opModeIsActive() && runtime.seconds() <= 7) {
-
-                //lift arm and hold
-                Arm.setTargetPosition(120);
-                Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                Arm.setPower(0.3);
-
-                //drive forward for 1 second
-                while (runtime.seconds() > 2 && runtime.seconds() <= 3) {
-                    drive(0.4, 4, 4);
-                }
-
-                //run intake
-                while (runtime.seconds() > 4 && runtime.seconds() <= 7) {
-                    spinnerArm.setPower(-0.6);
-                }
-
-                // turn off arm and intake
-                Arm.setPower(0);
-                spinnerArm.setPower(0);
-
-                //segment 3 - reverse to get better angle
-                drive(0.7, -15, -30);
-
-                //segment 4 - drive into warehouse
-                drive(1, 90, 90);
-            }
-        }
-    }*/
 }

@@ -15,8 +15,8 @@ public class distanceSensorTest extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Get the distance sensor and motor from hardwareMap
-        distance = hardwareMap.get(DistanceSensor.class, "DistanceTest");
-        motor = hardwareMap.get(DcMotor.class, "Motor");
+        distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
+        //motor = hardwareMap.get(DcMotor.class, "Motor");
 
         // Loop while the Op Mode is running
         waitForStart();
