@@ -21,13 +21,15 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name = "autoBasicPath", group = "Knightrix")
-public class autoBasicPath extends LinearOpMode {
 
-    private DcMotor RightDrive;
-    private DcMotor LeftDrive;
-    private DcMotor Arm;
-    private DcMotor spinnerArm;
+@Autonomous(name = "autoBasicPath", group = "Knightrix")
+public class autoBasicPath{
+    public DcMotor LeftDrive = null;
+    /*
+    public DcMotor RightDrive = null;
+    public DcMotor LeftDrive = null ;
+    public DcMotor Arm;
+    public DcMotor spinnerArm;
 
     //Convert from the counts per revolution of the encoder to counts per inch
     static final double HD_COUNTS_PER_REV = 28;
@@ -122,5 +124,5 @@ public class autoBasicPath extends LinearOpMode {
                 drive(1, 90, 90);
             }
         }
-    }
+    }*/
 }

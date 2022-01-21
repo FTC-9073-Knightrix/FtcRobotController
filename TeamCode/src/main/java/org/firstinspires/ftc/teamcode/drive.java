@@ -74,8 +74,8 @@ public class drive extends LinearOpMode {
         // spinnerArm.setPower(1);
 
         // Motors without encoders
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftDrive.setDirection(DcMotor.Direction.FORWARD); // switched from FORWARD
+        rightDrive.setDirection(DcMotor.Direction.REVERSE); // switched from REVERSE
         spinnerArm.setDirection(DcMotor.Direction.FORWARD);
 
 
@@ -159,8 +159,8 @@ public class drive extends LinearOpMode {
             // *************************
             // **** DRIVE THE ROBOT ****
             // *************************
-            double drive = -gamepad1.left_stick_y;
-            double turn = -gamepad1.right_stick_x;
+            double drive = gamepad1.left_stick_y;
+            double turn = gamepad1.right_stick_x;
 
             // Combine drive and turn for blended motion.
             LeftPower  = drive - turn;
