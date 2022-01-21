@@ -30,12 +30,17 @@ public class spin_carousel extends LinearOpMode{
     }
 
     public void spin(long time){
-        while (opModeIsActive() && (getRuntime() < time)){
+        while (opModeIsActive()){
+            if (getRuntime() < time){
             crServo.setPower(1);
             telemetry.addData("Status:", "Running");
             telemetry.addData("Power", crServo.getPower());
             telemetry.addData("Status", "Run Time: " + getRuntime());
             telemetry.update();
+        }
+            else {
+                crServo.setPower(0);
+            }
         }
     }
 

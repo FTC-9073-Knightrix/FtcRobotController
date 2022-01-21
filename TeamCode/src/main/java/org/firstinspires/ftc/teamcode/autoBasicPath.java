@@ -19,6 +19,10 @@ public class autoBasicPath extends LinearOpMode{
     DcMotor leftDrive;
     DcMotor rightDrive;
     DistanceSensor distance;
+    boolean status = false;
+    boolean done = false;
+    private ElapsedTime runtime = new ElapsedTime();
+
 
 
     static final double HD_COUNTS_PER_REV = 28;
@@ -27,70 +31,66 @@ public class autoBasicPath extends LinearOpMode{
     static final double DRIVE_COUNTS_PER_MM = (HD_COUNTS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_MM;
     static final double DRIVE_COUNTS_PER_IN = DRIVE_COUNTS_PER_MM * 25.4;
     double distance1;
-    private ElapsedTime runtime = new ElapsedTime();
-
 
     @Override
-    public void runOpMode() throws InterruptedException{
+    public void runOpMode() throws InterruptedException {
 
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
-        leftDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        rightDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
         distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
 
         //leftDrive.setPower(0.2);
         //rightDrive.setPower(0.2);
-        distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
+        //distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
         //motor = hardwareMap.get(DcMotor.class, "Motor");
 
         // Loop while the Op Mode is running
         waitForStart();
-// doesn't stop on turn
-        while (opModeIsActive()) {
+        while (opModeIsActive() && !done){
+            // doesn't stop on turn
             double distance1 = distance.getDistance(DistanceUnit.CM);
-            boolean turn = false;
+            //boolean turn = false;
             //Add data and format correctly
             telemetry.addData("status", "running");
             telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));
             //Consistently update the data while the Op Mode is running
             telemetry.update();
             //moves until reached a certain distance
-            if (distance1 < 40) {
+            if (distance1 < 40 && !status) {
                 //run to position at the desiginated power
-                leftDrive.setPower(-0.3);
-                rightDrive.setPower(-0.3);
-                telemetry.addData("turning", "false");
+                telemetry.addData("running", "forward");
                 telemetry.update();
-            } else {
-                ///                       set code for turning
-                //leftDrive.setPower(0);
-                //rightDrive.setPower(0);
-                leftDrive.setPower(0.75);
+                leftDrive.setPower(0.3);
+                rightDrive.setPower(0.3);
+
+            } else if (distance1>40 && !status){
+                leftDrive.setPower(0.75); //starts turning
                 rightDrive.setPower(-0.75);
                 Thread.sleep(1000);
-                //leftDrive.setPower(0);
-                //rightDrive.setPower(0);
-                telemetry.addData("turning:", "true");
-                telemetry.update();
-
+                status = true;
             }
-            //spin(5000);
-        }
-    }
+            //backwards towards carosel and turns
+            if(distance1>40 && status){
+                distance1 = distance.getDistance(DistanceUnit.CM);
+                telemetry.addData("distance after turn: ", distance.getDistance(DistanceUnit.CM));
+                telemetry.update();
+                leftDrive.setPower(-0.3);
+                rightDrive.setPower(-0.3);
+                //Thread.sleep(700);
+            } else if (distance1<40 && status) {
+                leftDrive.setPower(-0.75); //starts turning
+                rightDrive.setPower(0.75);
+                Thread.sleep(998);
+                leftDrive.setPower(0);
+                rightDrive.setPower(0);
+                done = true;
+            }
 
-
-
-    public void spin(long time){
-        while (opModeIsActive() && (getRuntime() < time)){
-            //leftDrive.setPower(0.2);
-            //rightDrive.setPower(0.2);
-
-            telemetry.addData("Status:", "Running");
-            //telemetry.addData("Power", DcMotor.getPower());
-            telemetry.addData("Status", "Run Time: " + getRuntime());
-            telemetry.addData("distance: ", "" + distance1);
-            telemetry.update();
+                //leftDrive.setPower(0.5); //starts going straight after turn so it goes over barricade and goes to warehouse
+                //rightDrive.setPower(0.5);
+                //Thread.sleep(2000);
         }
     }
 
