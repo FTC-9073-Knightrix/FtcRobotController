@@ -142,7 +142,7 @@ public class autoTurn extends LinearOpMode {
                 rightDrive.setPower(0.5);
             }
 
-            double curret_offset = turnDegrees - heading;
+            current_offset = turnDegrees - heading;
         }
         leftDrive.setPower(0);
         rightDrive.setPower(0);
