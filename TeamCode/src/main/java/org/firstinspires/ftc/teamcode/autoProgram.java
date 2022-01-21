@@ -1,16 +1,24 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 
+@Config
 @Autonomous(name = "testAuto", group = "Knightrix")
 public class autoProgram extends LinearOpMode {
-    @Override
-    public void runOpMode() throws InterruptedException {
+    FtcDashboard dashboard;
+    public  static double TARGET_POS = 100;
+    public static PIDCoefficients testPID = new PIDCoefficients(0,0,0);
 
+    @Override
+    public void runOpMode(){
+        dashboard = FtcDashboard.getInstance();
     }
     /*
     DcMotor leftDrive;
