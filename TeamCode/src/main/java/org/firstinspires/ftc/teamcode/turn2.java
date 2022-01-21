@@ -74,7 +74,7 @@ public class turn2 extends LinearOpMode {
         double error = degrees;
 
         while (opModeIsActive() && Math.abs(error) > 2) {
-            double motorPower = (error < 0 ? -0.3 : 0.3);
+            double motorPower = (error < 0 ? -0.8 : 0.8);
             leftDrive.setPower(-motorPower);
             rightDrive.setPower(motorPower);
             error = degrees - getAngle();

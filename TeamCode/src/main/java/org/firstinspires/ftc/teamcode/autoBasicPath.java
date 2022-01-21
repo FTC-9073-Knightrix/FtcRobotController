@@ -66,11 +66,11 @@ public class autoBasicPath extends LinearOpMode{
                 ///                       set code for turning
                 //leftDrive.setPower(0);
                 //rightDrive.setPower(0);
-                leftDrive.setPower(0.5);
-                rightDrive.setPower(-0.5);
-                sleep(1000);
-                leftDrive.setPower(0);
-                rightDrive.setPower(0);
+                leftDrive.setPower(0.75);
+                rightDrive.setPower(-0.75);
+                Thread.sleep(1000);
+                //leftDrive.setPower(0);
+                //rightDrive.setPower(0);
                 telemetry.addData("turning:", "true");
                 telemetry.update();
 
