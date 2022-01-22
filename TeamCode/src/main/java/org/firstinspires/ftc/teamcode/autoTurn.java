@@ -4,6 +4,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -24,10 +25,11 @@ public class autoTurn extends LinearOpMode {
     DcMotor leftDrive;
     DcMotor rightDrive;
 
+
     @Override
     public void runOpMode() {
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        leftDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -39,20 +41,19 @@ public class autoTurn extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
+
         // Set up our telemetry dashboard
-        //composeTelemetry();
-        imuGyroTurn(90);
+
+
+
         // Wait until we're told to go
+
         waitForStart();
 
-        // Start the logging of measured acceleration
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        imuGyroTurn(90, .5);
 
 
         // Loop and update the dashboard
-        while (opModeIsActive()) {
-            telemetry.update();
-        }
 
 
     }
@@ -116,39 +117,51 @@ public class autoTurn extends LinearOpMode {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 
-    public void imuGyroTurn(double turnDegrees){
-        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    public void imuGyroTurn(double turnDegrees, double speed){
 
-        double heading = angles.firstAngle;
-        telemetry.addData("CURRENT ANGLE:", heading);
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        double current_offset = turnDegrees - heading;
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double Curr_Heading = angles.firstAngle;
+        double Target_Heading = Curr_Heading + turnDegrees;
 
-        while ((current_offset < 5.0) && (-5.0 < current_offset)){
-            if ((5 < current_offset) && (current_offset < 30)){
-                leftDrive.setPower(0.25);
-                rightDrive.setPower(-0.25);
-            }
-            if (current_offset > 30){
-                leftDrive.setPower(.5);
-                rightDrive.setPower(.5);
-            }
-            if ((-5 > current_offset) && (current_offset > -30)){
-                leftDrive.setPower(-0.25);
-                rightDrive.setPower(0.25);
-            }
-            if (current_offset < -30){
-                leftDrive.setPower(-0.5);
-                rightDrive.setPower(0.5);
-            }
 
-            current_offset = turnDegrees - heading;
+        while ((opModeIsActive()) && (Math.abs(Target_Heading-Curr_Heading)>5)){   //5 is our threshold for angle
+
+
+            //where am I? => Variable
+            //loop to check I'm off that target
+            leftDrive.setPower(speed);
+            rightDrive.setPower(-speed);
+
+            Curr_Heading = angles.firstAngle;
+
+            if (Curr_Heading > 180) {
+                Curr_Heading -= 360;
+            } else if (Curr_Heading < -180) {
+                Curr_Heading += 360;
+            }
+            //end loop
+
+            telemetry.update();
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            telemetry.addData("Curr_Heading: ", Curr_Heading);
+            telemetry.addData("Target_Heading: ",Target_Heading);
+            telemetry.addData("TurnDegrees: ",turnDegrees);
+            telemetry.addData("Abs difference: ",Math.abs(Target_Heading-Curr_Heading));
+            telemetry.addData("Right Power", rightDrive.getPower());
+            telemetry.addData("Left Power", leftDrive.getPower());
+
         }
+        // Stop motors
         leftDrive.setPower(0);
         rightDrive.setPower(0);
+
+
     }
-
-
 }
 
 
