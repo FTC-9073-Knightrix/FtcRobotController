@@ -45,6 +45,7 @@ public class blueAutoBasicPath extends LinearOpMode{
     Servo servoFlip;
     TouchSensor BoxTouch;
     boolean BoxInitialized = false;
+    DcMotor spinnerIntake;
 
 
     boolean status = false;
@@ -70,6 +71,8 @@ public class blueAutoBasicPath extends LinearOpMode{
         spinnerArm = hardwareMap.get(DcMotor.class, "spinner_arm"); //spinner for big arm in intake
         servoFlip = hardwareMap.get(Servo.class, "flip_Intake");
         BoxTouch = hardwareMap.get(TouchSensor.class, "Box_Touch");
+        spinnerIntake = hardwareMap.get(DcMotor.class, "spinner_intake");
+
 
 
         spinnerArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -147,7 +150,7 @@ public class blueAutoBasicPath extends LinearOpMode{
     private void InitBox(){
         spinnerArm.setPower(-0.6);              // Moves Arm UP  ***************changed from negative to positive
         armPos = spinnerArm.getCurrentPosition();
-
+        //spinnerIntake.setPower(1);            // spins intake the entire time
         while (armPos < 300){
             armPos = spinnerArm.getCurrentPosition();
             telemetry.addData("ArmPos: ", armPos);

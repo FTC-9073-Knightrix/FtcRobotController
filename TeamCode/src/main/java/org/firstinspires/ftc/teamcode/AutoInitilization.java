@@ -52,6 +52,7 @@ public class AutoInitilization extends LinearOpMode{
     private void InitBox(){
         spinnerArm.setPower(-0.6);              // Moves Arm UP  ***************changed from negative to positive
         armPos = spinnerArm.getCurrentPosition();
+        //add spinner intake if needed
 
         while (armPos < 300){
             armPos = spinnerArm.getCurrentPosition();
