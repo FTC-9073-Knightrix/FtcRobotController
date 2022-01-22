@@ -147,7 +147,10 @@ public class drive extends LinearOpMode {
             CalcBoxPosition((double)armPos);
 
             if (!BoxInitialized) {
-                InitBox();
+                servoFlip.setPosition(0);              // Moves Servo to safe position
+                spinnerArm.setPower(-0.2);              // To hold Arm in place
+                sleep(2000);
+                BoxInitialized = true;
             } else {
                 servoFlip.setPosition(BoxPos);
             }

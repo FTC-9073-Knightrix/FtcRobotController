@@ -21,7 +21,7 @@ public class distanceSensorTest extends LinearOpMode {
         // Loop while the Op Mode is running
         waitForStart();
         while (opModeIsActive()){
-            double distance1 = distance.getDistance(DistanceUnit.CM);
+            //double distance1 = distance.getDistance(DistanceUnit.CM);
             //Add data and format correctly
             telemetry.addData("status", "running");
             telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));

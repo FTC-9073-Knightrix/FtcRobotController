@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -13,12 +15,38 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import org.checkerframework.checker.units.qual.A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@Autonomous(name = "blueAautoBasicPath", group = "Knightrix")
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+
+import java.util.Locale;
+
+@Autonomous(name = "blue_Competition", group = "Knightrix")
 public class blueAutoBasicPath extends LinearOpMode{
 
     DcMotor leftDrive;
     DcMotor rightDrive;
+    BNO055IMU imu;
+    Orientation angles;
     DistanceSensor distance;
+    private DcMotor spinnerArm = null;
+    double armPos = 0;
+    Servo servoFlip;
+    TouchSensor BoxTouch;
+    boolean BoxInitialized = false;
+
+
     boolean status = false;
     boolean done = false;
     boolean fback = false;
@@ -26,23 +54,40 @@ public class blueAutoBasicPath extends LinearOpMode{
     private ElapsedTime runtime = new ElapsedTime();
 
 
-
-    static final double HD_COUNTS_PER_REV = 28;
-    static final double DRIVE_GEAR_REDUCTION = 20.15293;
-    static final double WHEEL_CIRCUMFERENCE_MM = 90 * Math.PI;
-    static final double DRIVE_COUNTS_PER_MM = (HD_COUNTS_PER_REV * DRIVE_GEAR_REDUCTION) / WHEEL_CIRCUMFERENCE_MM;
-    static final double DRIVE_COUNTS_PER_IN = DRIVE_COUNTS_PER_MM * 25.4;
-    double distance1;
+    public double getDistance(){
+        return distance.getDistance(DistanceUnit.CM);
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftDrive.setDirection(DcMotor.Direction.FORWARD);
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightDrive.setDirection(DcMotor.Direction.REVERSE);
         distance = hardwareMap.get(DistanceSensor.class, "distanceTest");
         crServo = hardwareMap.get(CRServo.class, "cont_Servo");
+        spinnerArm = hardwareMap.get(DcMotor.class, "spinner_arm"); //spinner for big arm in intake
+        servoFlip = hardwareMap.get(Servo.class, "flip_Intake");
+        BoxTouch = hardwareMap.get(TouchSensor.class, "Box_Touch");
+
+
+        spinnerArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        spinnerArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        spinnerArm.setDirection(DcMotor.Direction.FORWARD);
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
 
         //leftDrive.setPower(0.2);
@@ -52,57 +97,76 @@ public class blueAutoBasicPath extends LinearOpMode{
 
         // Loop while the Op Mode is running
         waitForStart();
-        while (opModeIsActive() && !done){
-            // doesn't stop on turn
-            double distance1 = distance.getDistance(DistanceUnit.CM);
-            //boolean turn = false;
-            //Add data and format correctly
-            telemetry.addData("status", "running");
-            telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));
-            //Consistently update the data while the Op Mode is running
+        runtime.reset();
+
+        InitBox();
+        //Store distance sensor
+        double distance1 = distance.getDistance(DistanceUnit.CM);
+        distance_movement(15,0.9);  //makes forward from wall    *****change distance from 50 to small
+        imuGyroTurn(-85, -.9);  //turns towards left
+        distance_movement(30, 0.6);  //moves backwards torwards wall
+        //imuGyroTurn(0, -.9);  //turns towards right
+        //distance_movement(32, 0.9);  //moves backwards torwards wall
+        crServo.setPower(-1); //spinner moving back
+        leftDrive.setPower(.1);
+        rightDrive.setPower(.1);
+
+        sleep(10000);
+
+        //Go back to base
+        crServo.setPower(0);
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+        distance_movement(82,0.9);  //makes forward from wall
+        imuGyroTurn(48, .9);  //turn angle towards loading dock
+        distance_movement(80,0.7);  //makes forward from wall
+        imuGyroTurn(0, -.9);  //turns towards right
+
+        leftDrive.setPower(-0.2);
+        rightDrive.setPower(-0.2);
+        sleep(1500);
+
+        /*distance_movement(76,0.9);  //makes forward from wall
+        imuGyroTurn(-90, -.9);  //turns towards left
+        leftDrive.setPower(.2);  //starts backing into wall in loading dock
+        rightDrive.setPower(.2);
+
+        sleep(8000);*/
+
+        crServo.setPower(0);
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+
+
+
+
+        //spin(5000);
+
+    }
+
+    private void InitBox(){
+        spinnerArm.setPower(-0.6);              // Moves Arm UP  ***************changed from negative to positive
+        armPos = spinnerArm.getCurrentPosition();
+
+        while (armPos < 300){
+            armPos = spinnerArm.getCurrentPosition();
+            telemetry.addData("ArmPos: ", armPos);
             telemetry.update();
-            //moves until reached a certain distance
-            if (distance1 < 40 && !status) {
-                //run to position at the desiginated power
-                telemetry.addData("running", "forward");
-                telemetry.update();
-                leftDrive.setPower(0.6);
-                rightDrive.setPower(0.6);
-
-            } else if (distance1>40 && !status){
-                leftDrive.setPower(-0.75); //starts turning
-                rightDrive.setPower(0.75);
-                Thread.sleep(1000);
-                status = true;
-            }
-            //backwards towards carosel and turns
-            if(distance1>50 && status){
-                distance1 = distance.getDistance(DistanceUnit.CM);
-                telemetry.addData("distance after turn: ", distance.getDistance(DistanceUnit.CM));
-                telemetry.update();
-                leftDrive.setPower(-0.6);
-                rightDrive.setPower(-0.6);
-                //Thread.sleep(700);
-            } else if (distance1<40 && status && !fback) {
-                leftDrive.setPower(0.75); //starts turning
-                rightDrive.setPower(-0.75);
-                Thread.sleep(1000);
-                fback = true;
-            }
-
-            if (distance1>50 && fback) {
-                telemetry.addData("dist:", ""+distance1);
-                leftDrive.setPower(-0.6);
-                rightDrive.setPower(-0.6);
-            } else{
-                spin(5000);
-                done = true;
-            }
-
-            //leftDrive.setPower(0.5); //starts going straight after turn so it goes over barricade and goes to warehouse
-            //rightDrive.setPower(0.5);
-            //Thread.sleep(2000);
         }
+
+        servoFlip.setPosition(0);              // Moves Servo to safe position
+        spinnerArm.setPower(-0.2);              // To hold Arm in place
+        sleep(2000);                 // Wait for BOx to go to safe position
+
+        while (!BoxTouch.isPressed() ){  //add an or statement for #seconds passed
+            spinnerArm.setPower(0);              // Moves Arm DOWN
+
+        }
+
+        spinnerArm.setPower(0);              //Turn OFF Motor
+        spinnerArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); //This will also reset armPos
+        BoxInitialized = true;
+
     }
 
     public void spin(long time){
@@ -119,39 +183,133 @@ public class blueAutoBasicPath extends LinearOpMode{
             }
         }
     }
-    private void drive(double power, double leftInches, double rightInches) {
-        int rightTarget;
-        int leftTarget;
 
-        if (opModeIsActive()) {
-            double distance1 = distance.getDistance(DistanceUnit.CM);
-            //Add data and format correctly
-            telemetry.addData("status", "running");
-            telemetry.addData("distance: ", distance.getDistance(DistanceUnit.CM));
-            //Consistently update the data while the Op Mode is running
+
+    private void distance_movement(double distance, double speed) {
+
+        //Store distance sensor
+        double currDist = getDistance();
+
+        while (opModeIsActive() && Math.abs(currDist - distance)  > 2 ) {
+            currDist = getDistance();
+            telemetry.addData("Current distance", ""+currDist);
+            telemetry.addData("Desired Distance", ""+distance);
+            telemetry.addData("Difference", Math.abs(currDist - distance));
             telemetry.update();
-            // Create target positions
-            rightTarget = rightDrive.getCurrentPosition() + (int) (rightInches * DRIVE_COUNTS_PER_IN);
-            leftTarget = leftDrive.getCurrentPosition() + (int) (leftInches * DRIVE_COUNTS_PER_IN);
 
-            // set target position
-            leftDrive.setTargetPosition(leftTarget);
-            rightDrive.setTargetPosition(rightTarget);
-
-            //switch to run to position mode
-            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-
-
-            // wait until both motors are no longer busy running to position
-            while (opModeIsActive() && (leftDrive.isBusy() || rightDrive.isBusy())) {
+            if ((currDist - distance) > 0 ) {
+                leftDrive.setPower(speed);
+                rightDrive.setPower(speed);
+            } else {
+                leftDrive.setPower(-speed);
+                rightDrive.setPower(-speed);
             }
-
-            // set motor power back to 0
-            //leftDrive.setPower(0);
-            //rightDrive.setPower(0);
         }
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+    }
+
+
+    void composeTelemetry() {
+
+        // At the beginning of each telemetry update, grab a bunch of data
+        // from the IMU that we will then display in separate lines.
+        telemetry.addAction(new Runnable() { @Override public void run()
+        {
+            // Acquiring the angles is relatively expensive; we don't want
+            // to do that in each of the three items that need that info, as that's
+            // three times the necessary expense.
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        }
+        });
+
+        telemetry.addLine()
+                .addData("status", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getSystemStatus().toShortString();
+                    }
+                })
+                .addData("calib", new Func<String>() {
+                    @Override public String value() {
+                        return imu.getCalibrationStatus().toString();
+                    }
+                });
+
+        telemetry.addLine()
+                .addData("heading", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.firstAngle);
+                    }
+                })
+                .addData("roll", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.secondAngle);
+                    }
+                })
+                .addData("pitch", new Func<String>() {
+                    @Override public String value() {
+                        return formatAngle(angles.angleUnit, angles.thirdAngle);
+                    }
+                });
+
+    }
+
+    //----------------------------------------------------------------------------------------------
+    // Formatting
+    //----------------------------------------------------------------------------------------------
+
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+
+    public void imuGyroTurn(double turnDegrees, double speed){
+
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        //leftDrive.setDirection(DcMotor.Direction.FORWARD);
+        //rightDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double Curr_Heading = angles.firstAngle;
+        double Target_Heading = (Curr_Heading*0) - turnDegrees;
+
+
+        while ((opModeIsActive()) && (Math.abs(Target_Heading-Curr_Heading)>5)){   //5 is our threshold for angle
+
+
+            //where am I? => Variable
+            //loop to check I'm off that target
+            leftDrive.setPower(-speed);
+            rightDrive.setPower(speed);
+
+            Curr_Heading = angles.firstAngle;
+
+            if (Curr_Heading > 180) {
+                Curr_Heading -= 360;
+            } else if (Curr_Heading < -180) {
+                Curr_Heading += 360;
+            }
+            //end loop
+
+            telemetry.update();
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            telemetry.addData("Curr_Heading: ", Curr_Heading);
+            telemetry.addData("Target_Heading: ",Target_Heading);
+            telemetry.addData("TurnDegrees: ",turnDegrees);
+            telemetry.addData("Abs difference: ",Math.abs(Target_Heading-Curr_Heading));
+            telemetry.addData("Right Power", rightDrive.getPower());
+            telemetry.addData("Left Power", leftDrive.getPower());
+
+        }
+        // Stop motors
+        leftDrive.setPower(0);
+        rightDrive.setPower(0);
+
+
     }
 }
