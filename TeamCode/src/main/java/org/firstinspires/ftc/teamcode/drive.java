@@ -241,7 +241,7 @@ public class drive extends LinearOpMode {
     }
 
     private void InitBox(){
-        spinnerArm.setPower(-0.6);              // Moves Arm UP
+        spinnerArm.setPower(-0.6);              // Moves Arm UP  ***************changed from negative to positive
         armPos = spinnerArm.getCurrentPosition();
 
         while (armPos < 300){
@@ -277,6 +277,8 @@ public class drive extends LinearOpMode {
         } else {         // Dropping blocks;
             // Once reached Delivery, Use joystick
             if ((int)Math.abs(armPos-Drop_Rotation)<200) { // We are close to drop zone
+                telemetry.addData("servoFlip:", " dropping");
+                telemetry.update();
                 BoxPos = DropPos - Trigger_Adjust * (1-DropPos); // To ensure value is not bigger than 1
             } else {                                       // We are travelling
                 // Between PickUp and Delivery, calculate balance
@@ -304,7 +306,7 @@ public class drive extends LinearOpMode {
 
         if (armPos < 600) { // Pickup Zone
             if(armPos > Right_TrigPosition) {   // Above Target
-                spinPower = OvershootPower;    //was a negative
+                spinPower = -OvershootPower;    //was a negative
             } else {
                 // Add continuous down when close to Pickup_Hover position
                 // until the Touch is triggered

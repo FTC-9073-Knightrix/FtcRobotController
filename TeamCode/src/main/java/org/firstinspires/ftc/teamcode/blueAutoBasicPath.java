@@ -13,8 +13,8 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import org.checkerframework.checker.units.qual.A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@Autonomous(name = "autoBasicPath", group = "Knightrix")
-public class autoBasicPath extends LinearOpMode{
+@Autonomous(name = "blueAautoBasicPath", group = "Knightrix")
+public class blueAutoBasicPath extends LinearOpMode{
 
     DcMotor leftDrive;
     DcMotor rightDrive;
@@ -52,8 +52,6 @@ public class autoBasicPath extends LinearOpMode{
 
         // Loop while the Op Mode is running
         waitForStart();
-        runtime.reset();
-
         while (opModeIsActive() && !done){
             // doesn't stop on turn
             double distance1 = distance.getDistance(DistanceUnit.CM);
@@ -64,52 +62,16 @@ public class autoBasicPath extends LinearOpMode{
             //Consistently update the data while the Op Mode is running
             telemetry.update();
             //moves until reached a certain distance
-            if (distance1 >50 && fback) {
-                //run to position at the desiginated power
-                telemetry.addData("dist:", ""+distance1);
-                leftDrive.setPower(-0.6);
-                rightDrive.setPower(-0.6);
-
-            } else{
-                spin(5000);
-                done = true;
-            }
-            //backwards towards carosel and turns
-            if(distance1>50 && status){
-                distance1 = distance.getDistance(DistanceUnit.CM);
-                telemetry.addData("distance after turn: ", distance.getDistance(DistanceUnit.CM));
-                telemetry.update();
-                leftDrive.setPower(-0.6);
-                rightDrive.setPower(-0.6);
-                //Thread.sleep(700);
-            } else if (distance1<40 && status && !fback) {
-                leftDrive.setPower(-0.75); //starts turning
-                rightDrive.setPower(0.75);
-                Thread.sleep(1000);
-                fback = true;
-            }
-
             if (distance1 < 40 && !status) {
-                telemetry.addData("running", "forward");
-                telemetry.update();
-                leftDrive.setPower(0.6);
-                rightDrive.setPower(0.6);
-            } else if (distance1>40 && !status && !fback){
-                leftDrive.setPower(0.75); //starts turning
-                rightDrive.setPower(-0.75);
-                Thread.sleep(1000);
-                status = true;
-            }
-            /*if (distance1 < 40 && !status) {
                 //run to position at the desiginated power
                 telemetry.addData("running", "forward");
                 telemetry.update();
                 leftDrive.setPower(0.6);
                 rightDrive.setPower(0.6);
 
-            } else if (distance1>40 && !status && !fback){
-                leftDrive.setPower(0.75); //starts turning
-                rightDrive.setPower(-0.75);
+            } else if (distance1>40 && !status){
+                leftDrive.setPower(-0.75); //starts turning
+                rightDrive.setPower(0.75);
                 Thread.sleep(1000);
                 status = true;
             }
@@ -122,8 +84,8 @@ public class autoBasicPath extends LinearOpMode{
                 rightDrive.setPower(-0.6);
                 //Thread.sleep(700);
             } else if (distance1<40 && status && !fback) {
-                leftDrive.setPower(-0.75); //starts turning
-                rightDrive.setPower(0.75);
+                leftDrive.setPower(0.75); //starts turning
+                rightDrive.setPower(-0.75);
                 Thread.sleep(1000);
                 fback = true;
             }
@@ -135,11 +97,11 @@ public class autoBasicPath extends LinearOpMode{
             } else{
                 spin(5000);
                 done = true;
-            }*/
+            }
 
-                //leftDrive.setPower(0.5); //starts going straight after turn so it goes over barricade and goes to warehouse
-                //rightDrive.setPower(0.5);
-                //Thread.sleep(2000);
+            //leftDrive.setPower(0.5); //starts going straight after turn so it goes over barricade and goes to warehouse
+            //rightDrive.setPower(0.5);
+            //Thread.sleep(2000);
         }
     }
 
