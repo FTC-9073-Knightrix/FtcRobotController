@@ -44,7 +44,6 @@ public class turn2 extends LinearOpMode {
         waitForStart();
         turn(90);
         sleep(3000);
-        turn(-90);
 
     }
 
